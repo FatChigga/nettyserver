@@ -16,10 +16,9 @@ public class RpcResponse {
 
     private Object data;
 
-    private MessageStatusEnum statusEnum;
+    private MessageStatusEnum joinStatusEnum;
 
-    @Override
-    public String toString(){
-        return "id:"+id+",Object:"+data.toString()+",MessageStatus:"+statusEnum.name();
-    }
+    private MessageStatusEnum commitStatusEnum;
+
+    private Long threadId;
 }

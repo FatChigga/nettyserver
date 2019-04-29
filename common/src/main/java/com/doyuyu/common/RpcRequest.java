@@ -13,12 +13,23 @@ import lombok.*;
 @AllArgsConstructor
 public class RpcRequest {
 
-    private String id;
+    /**
+     * 客户端ID
+     */
+    private String clientId;
 
-    private Object data;
+    /**
+     * 事务组ID
+     */
+    private String transactionGroupId;
+
+    /**
+     * 线程ID
+     */
+    private Long threadId;
 
     @Override
     public String toString(){
-        return "id:"+id+",Object:"+data.toString();
+        return "transactionGroupId:"+transactionGroupId+",threadId:"+threadId;
     }
 }

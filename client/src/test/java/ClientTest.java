@@ -15,7 +15,7 @@ public class ClientTest {
         NettyClient nettyClient = new NettyClient(9023,"127.0.0.1");
         nettyClient.startup();
         Channel channel = nettyClient.getChannel();
-        RpcRequest rpcRequest = RpcRequest.builder().id(UUID.randomUUID().toString()).data("client.message").build();
+        RpcRequest rpcRequest = RpcRequest.builder().build();
         ChannelFuture future = channel.writeAndFlush(rpcRequest).sync();
     }
 }

@@ -1,4 +1,4 @@
-package com.doyuyu.transaction;
+package com.doyuyu.client;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  *
@@ -19,12 +22,12 @@ import java.lang.reflect.Method;
 
 @Aspect
 @Component
-public class DtsConfiguration {
+public class DtsAopConfiguration {
 
     @Autowired
-    private TransactionUtil transactionUtil;
+    ThreadPoolExecutor threadPoolExecutor;
 
-    @Pointcut("@annotation(com.doyuyu.transaction.DtsTransaction)")
+    @Pointcut("@annotation(DtsTransaction)")
     public void transactionLog(){}
 
     @Around("transactionLog()")
@@ -34,10 +37,14 @@ public class DtsConfiguration {
 
         Object target = proceedingJoinPoint.getTarget();
         Method method = target.getClass().getMethod(methodSignature.getName(),methodSignature.getParameterTypes());
+        DtsTransaction dtsTransaction = method.getAnnotation(DtsTransaction.class);
         Object[] param = proceedingJoinPoint.getArgs();
 
-        Object object = transactionUtil.transact(target,method,param);
+        TransactionEvent transactionEvent =
+                new TransactionEvent(target,method,param,dtsTransaction.timeout());
 
-        return object;
+        Future future = threadPoolExecutor.submit(transactionEvent);
+
+        return future.get();
     }
 }

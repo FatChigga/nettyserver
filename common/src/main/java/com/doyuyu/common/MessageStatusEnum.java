@@ -8,13 +8,17 @@ package com.doyuyu.common;
 public enum MessageStatusEnum {
 
     /**
-     * 接受消息失败
+     * 失败
      */
     FAILED(0),
     /**
-     * 接受消息成功
+     * 成功
      */
-    SUCCESS(1);
+    SUCCESS(1),
+    /**
+     * 常态
+     */
+    NORMAL(-1);
 
     private Integer value;
 

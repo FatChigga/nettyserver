@@ -1,15 +1,23 @@
 package com.doyuyu.server;
 
 import com.doyuyu.common.MessageStatusEnum;
+import com.doyuyu.common.RedisClient;
 import com.doyuyu.common.RpcRequest;
 import com.doyuyu.common.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.FullHttpRequest;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Timer;
 import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  *
@@ -26,14 +34,22 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception{
+        //channel连接断开
+        NettyChannelMap.remove((SocketChannel) ctx.channel());
+    }
+
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         RpcRequest rpcRequest = (RpcRequest)msg;
 
         logger.info("receive message from client:{}",rpcRequest.toString());
 
+        NettyChannelMap.add(rpcRequest.getClientId(),(SocketChannel) ctx.channel());
+
         RpcResponse rpcResponse =
                 RpcResponse.builder()
-                        .statusEnum(MessageStatusEnum.SUCCESS)
+                        .joinStatusEnum(MessageStatusEnum.SUCCESS)
                         .data("测试")
                         .id(UUID.randomUUID().toString())
                         .build();
