@@ -4,6 +4,7 @@ import com.doyuyu.common.RpcRequest;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -34,7 +35,8 @@ class TransactionEvent implements Callable<Object>{
     private Method method;
     private Object[] param;
     private Object result;
-    private Boolean isSuccess;
+    /**是否最后一个事务事件*/
+    private Boolean isEnd;
     private Long timeout;
 
     public TransactionEvent(Object targetClass, Method method, Object[] param,Long timeout) {
@@ -51,12 +53,24 @@ class TransactionEvent implements Callable<Object>{
                 platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
 
         result = method.invoke(targetClass,param);
-        isSuccess = true;
+        isEnd = true;
 
         //获取线程组，将当前线程放入线程组
         List<Thread> threads = Arrays.asList(transactionThreadGroup.getThreads());
         threads.add(Thread.currentThread());
         transactionThreadGroup.setThreads(threads.stream().toArray(Thread[]::new));
+
+        //获取事务组
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest httpRequest = attrs.getRequest();
+        String transactionGroupId = httpRequest.getHeader("transactionGroupId");
+
+        if(Objects.isNull(transactionGroupId)){
+            transactionGroupId = UUID.randomUUID().toString();
+            httpRequest.setAttribute("transactionGroupId",transactionGroupId);
+        }
+
+        final String finalTransactionGroupId = transactionGroupId;
 
         //遍历当前线程堆栈
         Arrays.asList(Thread.currentThread().getStackTrace()).parallelStream().forEach(
@@ -64,35 +78,36 @@ class TransactionEvent implements Callable<Object>{
                         stackTraceElement.getClass().getAnnotations()
                 ).parallelStream().forEach(
                         annotation -> {
-                            if(annotation.equals(DtsTransaction.class)) {
-                                //获取事务组
-                                ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-                                HttpServletRequest httpRequest = attrs.getRequest();
-                                String transactionGroupId = httpRequest.getHeader("transactionGroupId");
-                                if(Objects.isNull(transactionGroupId)){
-                                    transactionGroupId = UUID.randomUUID().toString();
-                                    httpRequest.setAttribute("transactionGroupId",transactionGroupId);
-                                }
+                            if(annotation.equals(FeignClient.class)) {
+                                isEnd = false;
 
                                 //发送请求，事务未结束
                                 nettyClient.getChannel()
                                         .writeAndFlush(RpcRequest.builder()
-                                                .transactionGroupId(transactionGroupId)
+                                                .transactionGroupId(finalTransactionGroupId)
                                                 .threadId(Thread.currentThread().getId())
                                                 .build());
-
-                                try {
-                                    wait(timeout);
-                                } catch (InterruptedException e) {
-                                    platformTransactionManager.rollback(transactionStatus);
-                                }
-
-                                platformTransactionManager.commit(transactionStatus);
-
                             }
                         }
                 )
         );
+
+        if(isEnd){
+            //发送请求，事务结束
+            nettyClient.getChannel()
+                    .writeAndFlush(RpcRequest.builder()
+                            .transactionGroupId(finalTransactionGroupId)
+                            .threadId(Thread.currentThread().getId())
+                            .build());
+        }
+
+        try {
+            wait(timeout);
+        } catch (InterruptedException e) {
+            platformTransactionManager.rollback(transactionStatus);
+        }
+
+        platformTransactionManager.commit(transactionStatus);
 
         return result;
     }
