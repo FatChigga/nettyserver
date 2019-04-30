@@ -84,7 +84,9 @@ class TransactionEvent implements Callable<Object>{
                             .transactionStatus(TransactionStatusEnum.ROLLBACK)
                             .build());
 
-            Thread.interrupted();
+            platformTransactionManager.rollback(transactionStatus);
+
+            throw e;
         }
 
         //遍历当前线程堆栈
