@@ -28,6 +28,11 @@ public class RpcRequest {
      */
     private Long threadId;
 
+    /**
+     * 状态
+     */
+    private TransactionStatusEnum transactionStatus;
+
     @Override
     public String toString(){
         return "transactionGroupId:"+transactionGroupId+",threadId:"+threadId;

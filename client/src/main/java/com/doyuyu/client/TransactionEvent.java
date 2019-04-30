@@ -1,6 +1,7 @@
 package com.doyuyu.client;
 
 import com.doyuyu.common.RpcRequest;
+import com.doyuyu.common.TransactionStatusEnum;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -87,6 +88,7 @@ class TransactionEvent implements Callable<Object>{
                                         .writeAndFlush(RpcRequest.builder()
                                                 .transactionGroupId(finalTransactionGroupId)
                                                 .threadId(Thread.currentThread().getId())
+                                                .transactionStatus(TransactionStatusEnum.JOIN)
                                                 .build());
                             }
                         }
@@ -99,6 +101,7 @@ class TransactionEvent implements Callable<Object>{
                     .writeAndFlush(RpcRequest.builder()
                             .transactionGroupId(finalTransactionGroupId)
                             .threadId(Thread.currentThread().getId())
+                            .transactionStatus(TransactionStatusEnum.COMMIT)
                             .build());
         }
 

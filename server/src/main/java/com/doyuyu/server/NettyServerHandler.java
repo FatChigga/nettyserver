@@ -1,9 +1,6 @@
 package com.doyuyu.server;
 
-import com.doyuyu.common.MessageStatusEnum;
-import com.doyuyu.common.RedisClient;
-import com.doyuyu.common.RpcRequest;
-import com.doyuyu.common.RpcResponse;
+import com.doyuyu.common.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.SocketChannel;
@@ -42,17 +39,35 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         RpcRequest rpcRequest = (RpcRequest)msg;
+        RpcResponse rpcResponse = null;
 
         logger.info("receive message from client:{}",rpcRequest.toString());
 
         NettyChannelMap.add(rpcRequest.getClientId(),(SocketChannel) ctx.channel());
 
-        RpcResponse rpcResponse =
-                RpcResponse.builder()
-                        .joinStatusEnum(MessageStatusEnum.SUCCESS)
-                        .data("测试")
-                        .id(UUID.randomUUID().toString())
-                        .build();
+        if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.COMMIT)){
+
+            //todo 读取该事务组所有的线程，发送消息通知提交事务
+
+            rpcResponse = RpcResponse.builder()
+                    .joinStatusEnum(MessageStatusEnum.SUCCESS)
+                    .commitStatusEnum(MessageStatusEnum.SUCCESS)
+                    .data("测试")
+                    .id(UUID.randomUUID().toString())
+                    .build();
+        }
+
+        if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.JOIN)){
+
+            //todo 把线程加入事务组保存
+
+            rpcResponse = RpcResponse.builder()
+                            .joinStatusEnum(MessageStatusEnum.SUCCESS)
+                            .commitStatusEnum(MessageStatusEnum.NORMAL)
+                            .data("测试")
+                            .id(UUID.randomUUID().toString())
+                            .build();
+        }
 
         ctx.writeAndFlush(rpcResponse);
     }
