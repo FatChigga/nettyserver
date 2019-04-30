@@ -1,7 +1,6 @@
 package com.doyuyu.client;
 
 import com.doyuyu.common.RpcRequest;
-import lombok.Builder;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -18,6 +17,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+
+import static java.util.stream.Collectors.toList;
 
 @Getter
 class TransactionEvent implements Callable<Object>{
@@ -56,7 +57,7 @@ class TransactionEvent implements Callable<Object>{
         isEnd = true;
 
         //获取线程组，将当前线程放入线程组
-        List<Thread> threads = Arrays.asList(transactionThreadGroup.getThreads());
+        List<Thread> threads = Arrays.stream(transactionThreadGroup.getThreads()).collect(toList());
         threads.add(Thread.currentThread());
         transactionThreadGroup.setThreads(threads.stream().toArray(Thread[]::new));
 
