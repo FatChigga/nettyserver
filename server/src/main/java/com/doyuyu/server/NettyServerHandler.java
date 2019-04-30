@@ -45,6 +45,10 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 
         NettyChannelMap.add(rpcRequest.getClientId(),(SocketChannel) ctx.channel());
 
+        if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.ROLLBACK)){
+            //todo 读取该事务组所有的线程，发送消息通知回滚事务
+        }
+
         if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.COMMIT)){
 
             //todo 读取该事务组所有的线程，发送消息通知提交事务

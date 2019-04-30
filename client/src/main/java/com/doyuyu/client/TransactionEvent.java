@@ -54,7 +54,6 @@ class TransactionEvent implements Callable<Object>{
         TransactionStatus transactionStatus =
                 platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
 
-        result = method.invoke(targetClass,param);
         isEnd = true;
 
         //获取线程组，将当前线程放入线程组
@@ -73,6 +72,20 @@ class TransactionEvent implements Callable<Object>{
         }
 
         final String finalTransactionGroupId = transactionGroupId;
+
+        try{
+            result = method.invoke(targetClass,param);
+        }catch (Exception e){
+            //发送请求，事务组事务回滚
+            nettyClient.getChannel()
+                    .writeAndFlush(RpcRequest.builder()
+                            .transactionGroupId(finalTransactionGroupId)
+                            .threadId(Thread.currentThread().getId())
+                            .transactionStatus(TransactionStatusEnum.ROLLBACK)
+                            .build());
+
+            Thread.interrupted();
+        }
 
         //遍历当前线程堆栈
         Arrays.asList(Thread.currentThread().getStackTrace()).parallelStream().forEach(
