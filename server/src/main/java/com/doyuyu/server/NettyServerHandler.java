@@ -43,15 +43,45 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 
         logger.info("receive message from client:{}",rpcRequest.toString());
 
-        NettyChannelMap.add(rpcRequest.getClientId(),(SocketChannel) ctx.channel());
-
         if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.ROLLBACK)){
-            //todo 读取该事务组所有的线程，发送消息通知回滚事务
+            //读取该事务组所有的线程，发送消息通知回滚事务
+            TransactionGroupMap.get(rpcRequest.getTransactionGroupId()).stream().forEach(
+                    threadId -> {
+                        RpcResponse response = RpcResponse.builder()
+                                .joinStatusEnum(MessageStatusEnum.SUCCESS)
+                                .commitStatusEnum(MessageStatusEnum.FAILED)
+                                .data("测试")
+                                .id(UUID.randomUUID().toString())
+                                .build();
+
+                        SocketChannel channel = NettyChannelMap.get(threadId);
+                        channel.writeAndFlush(response);
+                    }
+            );
+
+            rpcResponse = RpcResponse.builder()
+                    .joinStatusEnum(MessageStatusEnum.SUCCESS)
+                    .commitStatusEnum(MessageStatusEnum.FAILED)
+                    .data("测试")
+                    .id(UUID.randomUUID().toString())
+                    .build();
         }
 
         if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.COMMIT)){
+            //读取该事务组所有的线程，发送消息通知提交事务
+            TransactionGroupMap.get(rpcRequest.getTransactionGroupId()).stream().forEach(
+                    threadId -> {
+                        RpcResponse response = RpcResponse.builder()
+                                .joinStatusEnum(MessageStatusEnum.SUCCESS)
+                                .commitStatusEnum(MessageStatusEnum.SUCCESS)
+                                .data("测试")
+                                .id(UUID.randomUUID().toString())
+                                .build();
 
-            //todo 读取该事务组所有的线程，发送消息通知提交事务
+                        SocketChannel channel = NettyChannelMap.get(threadId);
+                        channel.writeAndFlush(response);
+                    }
+            );
 
             rpcResponse = RpcResponse.builder()
                     .joinStatusEnum(MessageStatusEnum.SUCCESS)
@@ -63,7 +93,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 
         if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.JOIN)){
 
-            //todo 把线程加入事务组保存
+            TransactionGroupMap.add(rpcRequest.getTransactionGroupId(),rpcRequest.getThreadId());
+            NettyChannelMap.add(rpcRequest.getThreadId(),(SocketChannel) ctx.channel());
 
             rpcResponse = RpcResponse.builder()
                             .joinStatusEnum(MessageStatusEnum.SUCCESS)
