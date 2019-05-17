@@ -54,10 +54,6 @@ public class NettyServer {
                          * Downstream则对应下行，发送的消息、主动的状态改变，都属于Downstream。
                          */
                         socketChannel.pipeline()
-                                /**
-                                 * 心跳检测
-                                 */
-                                .addLast(new IdleStateHandler(2,0,0, TimeUnit.SECONDS))
                                 .addLast(new RpcDecode(RpcRequest.class))
                                 .addLast(new RpcEncode(RpcResponse.class))
                                 .addLast(new NettyServerHandler());
