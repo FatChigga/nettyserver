@@ -6,4 +6,5 @@ package com.doyuyu.server;
  * @date 2019/5/17
  */
 public class Producer {
+
 }

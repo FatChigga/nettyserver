@@ -54,16 +54,13 @@ public class RedisClient{
 
     public static List listGetAll(String key){
         Jedis jedis = getJedis();
-
         List list = Lists.newArrayList();
         long len = jedis.llen(key);
         for(long i = 0;i < len;i++){
             String objectString = jedis.lindex(key,i);
             list.add(JSONObject.parse(objectString));
         }
-
         jedis.close();
-
         return list;
     }
 
