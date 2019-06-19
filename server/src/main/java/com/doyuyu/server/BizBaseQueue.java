@@ -1,6 +1,14 @@
 package com.doyuyu.server;
 
+import com.doyuyu.common.StringTools;
+import com.google.common.collect.Collections2;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author songyuxiang
@@ -51,5 +59,31 @@ public enum  BizBaseQueue implements QueueDefinition{
     @Override
     public Map<String, Object> getArgs() {
         return arg;
+    }
+
+    @Override
+    public String getAmqpRoutingKey(){
+        if(Objects.isNull(this.getSignature())){
+            return "";
+        }
+        List<String> list = StringTools.split(this.getSignature(),":");
+        if(CollectionUtils.isNotEmpty(list) && list.size() == 3){
+            return list.get(1);
+        }else{
+            return "";
+        }
+    }
+
+    @Override
+    public String getAmqpExchangeName(){
+        if(Objects.isNull(this.getSignature())){
+            return "";
+        }
+        List<String> list = StringTools.split(this.getSignature(),":");
+        if(CollectionUtils.isNotEmpty(list) && list.size() >= 1){
+            return list.get(0);
+        }else{
+            return "";
+        }
     }
 }

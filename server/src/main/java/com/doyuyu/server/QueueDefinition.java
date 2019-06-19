@@ -2,6 +2,11 @@ package com.doyuyu.server;
 
 import java.util.Map;
 
+/**
+ *@description: 队列定义
+ *@author: songyuxiang
+ *@date: 2019/5/23
+ */
 public interface QueueDefinition {
 
     String getSignature();
@@ -17,4 +22,11 @@ public interface QueueDefinition {
     default Map<String,Object> getArgs(){
         return null;
     }
+
+    /**
+     * 返回AMQP RoutingKey
+     */
+    String getAmqpRoutingKey();
+
+    String getAmqpExchangeName();
 }

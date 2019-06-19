@@ -1,11 +1,6 @@
 package com.doyuyu.server;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
-import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author songyuxiang
@@ -13,25 +8,25 @@ import java.util.concurrent.TimeoutException;
  * @date 2019/5/17
  */
 public class RabbitMqClient {
-    private static final String ADDR = "192.168.195.129";
-
+    private static final String HOST = "192.168.195.129";
     private static final Integer PORT = 5672;
+    private static final String USERNAME = "";
+    private static final String PASSWORD = "";
+    private static final String VIRTUAL_HOST = "";
+    public static final String DEFAULT_DIRECT_EXCHANGE_NAME = "com.biz.base.direct";
+    public static final String DEFAULT_TOPIC_EXCHANGE_NAME = "com.biz.base.topic";
 
-    private static final ConnectionFactory connectionFactory = new ConnectionFactory();
-
-    static {
-        connectionFactory.setHost(ADDR);
+    public static ConnectionFactory getConnectionFactory(){
+        ConnectionFactory connectionFactory = new ConnectionFactory();
+        connectionFactory.setUsername(USERNAME);
+        connectionFactory.setPassword(PASSWORD);
+        connectionFactory.setVirtualHost(VIRTUAL_HOST);
         connectionFactory.setPort(PORT);
-    }
+        connectionFactory.setHost(HOST);
 
-    public static void sendMessage(QueueDefinition queueDefinition,BizMessage<?> message){
-        try(Connection connection = connectionFactory.newConnection();
-                Channel channel = connection.createChannel()) {
-                channel.exchangeDeclare(queueDefinition.getSignature(),queueDefinition.getType().name());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
+        connectionFactory.setAutomaticRecoveryEnabled(true);
+        connectionFactory.setNetworkRecoveryInterval(10000);
+
+        return connectionFactory;
     }
 }

@@ -51,11 +51,6 @@
             <version>RELEASE</version>
         </dependency>
         <dependency>
-            <groupId>com.doyuyu</groupId>
-            <artifactId>client</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
             <version>RELEASE</version>
