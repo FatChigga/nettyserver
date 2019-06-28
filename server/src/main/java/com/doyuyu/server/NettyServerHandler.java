@@ -40,8 +40,6 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
             pipeline.taskExecuted();
         }catch (TransactionServerException t){
             throw t;
-        }finally {
-            pipeline.afterCompletion();
         }
     }
 

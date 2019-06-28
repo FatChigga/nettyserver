@@ -1,11 +1,15 @@
 package com.doyuyu.server.config;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import redis.clients.jedis.JedisPoolConfig;
 
 /**
@@ -18,7 +22,7 @@ import redis.clients.jedis.JedisPoolConfig;
 public class ManageConfig {
 
     @Bean
-    public JedisConnectionFactory connectionFactory(@Autowired PropertiesConfiguration redisConfiguration){
+    public JedisConnectionFactory connectionFactory(PropertiesConfiguration redisConfiguration){
         JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
         jedisConnectionFactory.setHostName(redisConfiguration.getString("biz.redis.host"));
         jedisConnectionFactory.setPort(redisConfiguration.getInt("biz.redis.port"));
@@ -35,4 +39,28 @@ public class ManageConfig {
         return jedisConnectionFactory;
     }
 
+    @Bean
+    public RedisTemplate redisTemplate(@Autowired PropertiesConfiguration redisConfiguration) {
+        RedisTemplate redisTemplate = new RedisTemplate();
+        redisTemplate.setConnectionFactory(connectionFactory(redisConfiguration));
+        redisTemplate.setEnableTransactionSupport(false);
+        return redisTemplate;
+    }
+
+    @Bean
+    public ConnectionFactory rabbitConnectionFactory(PropertiesConfiguration rabbitConfiguration){
+        CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
+        cachingConnectionFactory.setUsername(rabbitConfiguration.getString("biz.rabbit.username"));
+        cachingConnectionFactory.setPassword(rabbitConfiguration.getString("biz.rabbit.password"));
+        cachingConnectionFactory.setPort(rabbitConfiguration.getInt("biz.rabbit.port"));
+        cachingConnectionFactory.setHost(rabbitConfiguration.getString("biz.rabbit.host"));
+        return cachingConnectionFactory;
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(@Autowired PropertiesConfiguration rabbitConfiguration){
+        RabbitTemplate rabbitTemplate = new RabbitTemplate();
+        rabbitTemplate.setConnectionFactory(rabbitConnectionFactory(rabbitConfiguration));
+        return rabbitTemplate;
+    }
 }

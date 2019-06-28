@@ -8,6 +8,7 @@ import io.netty.channel.socket.SocketChannel;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -21,16 +22,13 @@ import java.util.UUID;
 public class JoinHandler implements Handler {
 
     @Autowired
-    private JedisConnectionFactory connectionFactory;
+    private RedisTemplate redisTemplate;
 
     @Override
     public void executeTask(HandlerContext ctx, RpcRequest rpcRequest) {
         if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.JOIN)){
-
-            TransactionGroupMap.add(rpcRequest.getTransactionGroupId(),rpcRequest.getThreadId());
             NettyChannelMap.add(rpcRequest.getThreadId(),(SocketChannel) ctx.getChannelHandlerContext().channel());
-
-
+            redisTemplate.opsForList().leftPush(rpcRequest.getTransactionGroupId(),rpcRequest.getThreadId());
 
             RpcResponse rpcResponse = RpcResponse.builder()
                     .joinStatusEnum(MessageStatusEnum.SUCCESS)
@@ -38,12 +36,9 @@ public class JoinHandler implements Handler {
                     .data("测试")
                     .id(UUID.randomUUID().toString())
                     .build();
+
+            ctx.getChannelHandlerContext().writeAndFlush(rpcResponse);
         }
         ctx.fireTaskExecuted(rpcRequest);
-    }
-
-    @Override
-    public void afterCompletion(HandlerContext ctx) {
-
     }
 }
