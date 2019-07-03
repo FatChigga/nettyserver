@@ -1,17 +1,11 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
-import com.doyuyu.common.MessageStatusEnum;
 import com.doyuyu.common.RpcRequest;
-import com.doyuyu.common.RpcResponse;
 import com.doyuyu.common.TransactionStatusEnum;
-import io.netty.channel.socket.SocketChannel;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
-import java.util.Objects;
-import java.util.UUID;
 
 /**
  * @author songyuxiang
@@ -32,18 +26,8 @@ public class CommitHandler implements Handler {
         if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.COMMIT)){
             //读取该事务组所有的线程，发送消息通知提交事务
             while(redisTemplate.opsForList().size(rpcRequest.getTransactionGroupId()) > 0){
-                RpcResponse response = RpcResponse.builder()
-                        .joinStatusEnum(MessageStatusEnum.SUCCESS)
-                        .commitStatusEnum(MessageStatusEnum.SUCCESS)
-                        .data("测试")
-                        .id(UUID.randomUUID().toString())
-                        .build();
-
-                SocketChannel channel =
-                        NettyChannelMap.get(
-                                Long.parseLong(redisTemplate.opsForList().leftPop(rpcRequest.getTransactionGroupId()).toString())
-                        );
-                channel.writeAndFlush(response);
+                String transactionId = redisTemplate.opsForList().leftPop(rpcRequest.getTransactionGroupId()).toString();
+                rabbitTemplate.convertAndSend("","",transactionId);
             }
 
             redisTemplate.delete(rpcRequest.getTransactionGroupId());

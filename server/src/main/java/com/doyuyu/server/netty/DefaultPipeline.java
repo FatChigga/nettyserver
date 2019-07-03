@@ -1,7 +1,6 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import com.doyuyu.common.RpcRequest;
-import com.doyuyu.common.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -61,7 +60,7 @@ public class DefaultPipeline implements Pipeline,ApplicationContextAware,Initial
         if(Objects.isNull(rpcRequest.getTransactionStatus())){
             throw new TransactionServerException("TransactionStatus is null");
         }
-        if(Objects.isNull(rpcRequest.getThreadId())){
+        if(Objects.isNull(rpcRequest.getTransactionId())){
             throw new TransactionServerException("ThreadId is null");
         }
         if(Objects.isNull(rpcRequest.getTransactionGroupId())){

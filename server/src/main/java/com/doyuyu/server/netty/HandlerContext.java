@@ -1,7 +1,8 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import com.doyuyu.common.RpcRequest;
 import io.netty.channel.ChannelHandlerContext;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

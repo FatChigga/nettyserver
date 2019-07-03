@@ -21,7 +21,7 @@ public class RpcRequest {
     /**
      * 线程ID
      */
-    private Long threadId;
+    private Long transactionId;
 
     /**
      * 状态
@@ -30,6 +30,6 @@ public class RpcRequest {
 
     @Override
     public String toString(){
-        return "transactionGroupId:"+transactionGroupId+",threadId:"+threadId;
+        return "transactionGroupId:"+transactionGroupId+",threadId:"+transactionId;
     }
 }

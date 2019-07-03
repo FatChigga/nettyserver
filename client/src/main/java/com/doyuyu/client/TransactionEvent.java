@@ -80,7 +80,7 @@ class TransactionEvent implements Callable<Object>{
             nettyClient.getChannel()
                     .writeAndFlush(RpcRequest.builder()
                             .transactionGroupId(finalTransactionGroupId)
-                            .threadId(Thread.currentThread().getId())
+                            .transactionId(Thread.currentThread().getId())
                             .transactionStatus(TransactionStatusEnum.ROLLBACK)
                             .build());
 
@@ -102,7 +102,7 @@ class TransactionEvent implements Callable<Object>{
                                 nettyClient.getChannel()
                                         .writeAndFlush(RpcRequest.builder()
                                                 .transactionGroupId(finalTransactionGroupId)
-                                                .threadId(Thread.currentThread().getId())
+                                                .transactionId(Thread.currentThread().getId())
                                                 .transactionStatus(TransactionStatusEnum.JOIN)
                                                 .build());
                             }
@@ -115,7 +115,7 @@ class TransactionEvent implements Callable<Object>{
             nettyClient.getChannel()
                     .writeAndFlush(RpcRequest.builder()
                             .transactionGroupId(finalTransactionGroupId)
-                            .threadId(Thread.currentThread().getId())
+                            .transactionId(Thread.currentThread().getId())
                             .transactionStatus(TransactionStatusEnum.COMMIT)
                             .build());
         }

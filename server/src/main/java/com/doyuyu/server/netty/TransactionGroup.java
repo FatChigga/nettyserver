@@ -1,4 +1,4 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import java.util.Map;
 

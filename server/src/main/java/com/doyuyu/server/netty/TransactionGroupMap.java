@@ -1,4 +1,4 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import com.google.common.collect.Lists;
 import io.netty.channel.socket.SocketChannel;

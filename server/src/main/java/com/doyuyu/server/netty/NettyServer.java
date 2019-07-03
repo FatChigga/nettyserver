@@ -1,4 +1,4 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import com.doyuyu.common.RpcDecode;
 import com.doyuyu.common.RpcEncode;
@@ -12,11 +12,10 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
@@ -24,6 +23,10 @@ import java.util.concurrent.TimeUnit;
  * @date 2019/4/3
  */
 public class NettyServer {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
     Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
     public void bind(int port) throws Exception{

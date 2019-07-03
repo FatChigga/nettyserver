@@ -1,13 +1,11 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import com.doyuyu.common.MessageStatusEnum;
 import com.doyuyu.common.RpcRequest;
 import com.doyuyu.common.RpcResponse;
 import com.doyuyu.common.TransactionStatusEnum;
 import io.netty.channel.socket.SocketChannel;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +25,8 @@ public class JoinHandler implements Handler {
     @Override
     public void executeTask(HandlerContext ctx, RpcRequest rpcRequest) {
         if(rpcRequest.getTransactionStatus().equals(TransactionStatusEnum.JOIN)){
-            NettyChannelMap.add(rpcRequest.getThreadId(),(SocketChannel) ctx.getChannelHandlerContext().channel());
-            redisTemplate.opsForList().leftPush(rpcRequest.getTransactionGroupId(),rpcRequest.getThreadId());
+            NettyChannelMap.add(rpcRequest.getTransactionId(),(SocketChannel) ctx.getChannelHandlerContext().channel());
+            redisTemplate.opsForList().leftPush(rpcRequest.getTransactionGroupId(),rpcRequest.getTransactionId());
 
             RpcResponse rpcResponse = RpcResponse.builder()
                     .joinStatusEnum(MessageStatusEnum.SUCCESS)

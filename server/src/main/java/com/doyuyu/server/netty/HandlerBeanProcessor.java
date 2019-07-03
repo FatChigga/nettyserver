@@ -1,4 +1,4 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;

@@ -1,4 +1,4 @@
-package com.doyuyu.server;
+package com.doyuyu.server.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

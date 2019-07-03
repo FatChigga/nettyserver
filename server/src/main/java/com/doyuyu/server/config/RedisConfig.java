@@ -4,6 +4,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 
 /**
@@ -12,6 +13,7 @@ import org.springframework.core.env.Environment;
  * @date 2019/6/27
  */
 @Configuration
+@PropertySource(value= "classpath:application.properties")
 public class RedisConfig {
 
     @Autowired
@@ -24,7 +26,7 @@ public class RedisConfig {
         propertiesConfiguration.addProperty("biz.redis.database", environment.getProperty("biz.redis.database", Integer.class));
         propertiesConfiguration.addProperty("biz.redis.password", environment.getProperty("biz.redis.password"));
         propertiesConfiguration.addProperty("biz.redis.name", environment.getProperty("biz.redis.name"));
-        propertiesConfiguration.addProperty("biz.redis.port", environment.getProperty("biz.redis.port"));
+        propertiesConfiguration.addProperty("biz.redis.port", environment.getProperty("biz.redis.port", Integer.class));
         propertiesConfiguration.addProperty("biz.redis.maxTotal", environment.getProperty("biz.redis.maxTotal", Integer.class));
         propertiesConfiguration.addProperty("biz.redis.maxIdle", environment.getProperty("biz.redis.maxIdle", Integer.class));
         propertiesConfiguration.addProperty("biz.redis.timeBetweenEvictionRunsMillis", environment.getProperty("biz.redis.timeBetweenEvictionRunsMillis", Integer.class));

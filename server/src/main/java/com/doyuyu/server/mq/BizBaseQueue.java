@@ -1,11 +1,8 @@
-package com.doyuyu.server;
+package com.doyuyu.server.mq;
 
 import com.doyuyu.common.StringTools;
-import com.google.common.collect.Collections2;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
