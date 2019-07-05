@@ -2,7 +2,9 @@ package com.doyuyu.client;
 
 import com.doyuyu.common.RpcRequest;
 import com.doyuyu.common.TransactionStatusEnum;
+import io.netty.channel.Channel;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -22,10 +24,11 @@ import java.util.concurrent.Callable;
 import static java.util.stream.Collectors.toList;
 
 @Getter
+@Slf4j
 class TransactionEvent implements Callable<Object>{
 
     @Autowired
-    private NettyClient nettyClient;
+    private Channel channel;
 
     @Autowired
     private TransactionThreadGroup transactionThreadGroup;
@@ -50,6 +53,7 @@ class TransactionEvent implements Callable<Object>{
 
     @Override
     public Object call()throws Exception{
+        log.info("进入线程"+Thread.currentThread().getName());
         //获取事务
         TransactionStatus transactionStatus =
                 platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
@@ -73,22 +77,6 @@ class TransactionEvent implements Callable<Object>{
 
         final String finalTransactionGroupId = transactionGroupId;
 
-        try{
-            result = method.invoke(targetClass,param);
-        }catch (Exception e){
-            //发送请求，事务组事务回滚
-            nettyClient.getChannel()
-                    .writeAndFlush(RpcRequest.builder()
-                            .transactionGroupId(finalTransactionGroupId)
-                            .transactionId(Thread.currentThread().getId())
-                            .transactionStatus(TransactionStatusEnum.ROLLBACK)
-                            .build());
-
-            platformTransactionManager.rollback(transactionStatus);
-
-            throw e;
-        }
-
         //遍历当前线程堆栈
         Arrays.asList(Thread.currentThread().getStackTrace()).parallelStream().forEach(
                 stackTraceElement -> Arrays.asList(
@@ -99,25 +87,40 @@ class TransactionEvent implements Callable<Object>{
                                 isEnd = false;
 
                                 //发送请求，事务未结束
-                                nettyClient.getChannel()
-                                        .writeAndFlush(RpcRequest.builder()
-                                                .transactionGroupId(finalTransactionGroupId)
-                                                .transactionId(Thread.currentThread().getId())
-                                                .transactionStatus(TransactionStatusEnum.JOIN)
-                                                .build());
+                                channel.writeAndFlush(RpcRequest.builder()
+                                        .transactionGroupId(finalTransactionGroupId)
+                                        .transactionId(Thread.currentThread().getId())
+                                        .transactionStatus(TransactionStatusEnum.JOIN)
+                                        .build());
                             }
                         }
                 )
         );
 
+        log.info("是否最后一个线程"+isEnd);
+
+        try{
+            result = method.invoke(targetClass,param);
+        }catch (Exception e){
+            //发送请求，事务组事务回滚
+            channel.writeAndFlush(RpcRequest.builder()
+                    .transactionGroupId(finalTransactionGroupId)
+                    .transactionId(Thread.currentThread().getId())
+                    .transactionStatus(TransactionStatusEnum.ROLLBACK)
+                    .build());
+
+            platformTransactionManager.rollback(transactionStatus);
+
+            throw e;
+        }
+
         if(isEnd){
             //发送请求，事务结束
-            nettyClient.getChannel()
-                    .writeAndFlush(RpcRequest.builder()
-                            .transactionGroupId(finalTransactionGroupId)
-                            .transactionId(Thread.currentThread().getId())
-                            .transactionStatus(TransactionStatusEnum.COMMIT)
-                            .build());
+            channel.writeAndFlush(RpcRequest.builder()
+                    .transactionGroupId(finalTransactionGroupId)
+                    .transactionId(Thread.currentThread().getId())
+                    .transactionStatus(TransactionStatusEnum.COMMIT)
+                    .build());
         }
 
         try {
