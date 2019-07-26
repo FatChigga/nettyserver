@@ -2,6 +2,7 @@ package com.doyuyu.client;
 
 import com.doyuyu.common.RpcRequest;
 import com.doyuyu.common.TransactionStatusEnum;
+import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +15,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static java.util.stream.Collectors.toList;
@@ -53,13 +52,11 @@ class TransactionEvent implements Callable<Object>{
 
     @Override
     public Object call()throws Exception{
+        isEnd = true;
         log.info("进入线程"+Thread.currentThread().getName());
         //获取事务
         TransactionStatus transactionStatus =
                 platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
-
-        isEnd = true;
-
         //获取线程组，将当前线程放入线程组
         List<Thread> threads = Arrays.stream(transactionThreadGroup.getThreads()).collect(toList());
         threads.add(Thread.currentThread());
@@ -76,26 +73,27 @@ class TransactionEvent implements Callable<Object>{
         }
 
         final String finalTransactionGroupId = transactionGroupId;
+        Set<Annotation> annotationSet = new HashSet<>();
 
         //遍历当前线程堆栈
         Arrays.asList(Thread.currentThread().getStackTrace()).parallelStream().forEach(
-                stackTraceElement -> Arrays.asList(
-                        stackTraceElement.getClass().getAnnotations()
-                ).parallelStream().forEach(
-                        annotation -> {
-                            if(annotation.equals(FeignClient.class)) {
-                                isEnd = false;
-
-                                //发送请求，事务未结束
-                                channel.writeAndFlush(RpcRequest.builder()
-                                        .transactionGroupId(finalTransactionGroupId)
-                                        .transactionId(Thread.currentThread().getId())
-                                        .transactionStatus(TransactionStatusEnum.JOIN)
-                                        .build());
-                            }
-                        }
-                )
+                stackTraceElement -> annotationSet.addAll(Arrays.asList(stackTraceElement.getClass().getAnnotations()))
         );
+
+        Iterator<Annotation> iterator = annotationSet.iterator();
+        while (iterator.hasNext()){
+            Annotation annotation = iterator.next();
+            if(annotation.equals(FeignClient.class)) {
+                isEnd = false;
+                //发送请求，事务未结束
+                channel.writeAndFlush(RpcRequest.builder()
+                        .transactionGroupId(finalTransactionGroupId)
+                        .transactionId(Thread.currentThread().getId())
+                        .transactionStatus(TransactionStatusEnum.JOIN)
+                        .build());
+                break;
+            }
+        }
 
         log.info("是否最后一个线程"+isEnd);
 
@@ -108,9 +106,7 @@ class TransactionEvent implements Callable<Object>{
                     .transactionId(Thread.currentThread().getId())
                     .transactionStatus(TransactionStatusEnum.ROLLBACK)
                     .build());
-
             platformTransactionManager.rollback(transactionStatus);
-
             throw e;
         }
 

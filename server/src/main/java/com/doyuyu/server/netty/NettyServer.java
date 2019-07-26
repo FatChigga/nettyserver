@@ -12,6 +12,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -23,9 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @date 2019/4/3
  */
 public class NettyServer {
-
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
 
     Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
@@ -44,6 +43,7 @@ public class NettyServer {
                 .option(ChannelOption.SO_BACKLOG,128)
                 //保持长连接
                 .childOption(ChannelOption.SO_KEEPALIVE,true)
+                .handler(new LoggingHandler(LogLevel.INFO))
                 // 绑定客户端连接时候触发操作
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
