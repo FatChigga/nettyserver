@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.*;
 
 /**
@@ -33,6 +35,9 @@ public class DtsConfiguration {
 
     @Value("${biz.netty.port}")
     private Integer port;
+
+    @Value("${biz.netty.channel.max}")
+    private Integer maxChannel;
 
     @Bean
     public TransactionThreadGroup transactionThreadGroup(){
@@ -59,11 +64,12 @@ public class DtsConfiguration {
     }
 
     @Bean
-    public ChannelFuture channelFuture() throws InterruptedException {
+    public FixedChannelPool nettyChannelPool() throws InterruptedException {
         final EventLoopGroup group = new NioEventLoopGroup();
 
         Bootstrap bootstrap = new Bootstrap();
-
+        // 连接地址
+        InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved(host, port);
         bootstrap.group(group)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -71,28 +77,12 @@ public class DtsConfiguration {
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline()
                                 .addLast(new RpcEncode(RpcRequest.class))
-                                .addLast(new RpcDecode(RpcResponse.class))
+                                .addLast(new RpcDecode())
                                 .addLast(new NettyClientHandler());
                     }
-                });
+                }).remoteAddress(remoteAddress);
 
-        final ChannelFuture channelFuture = bootstrap.connect(host,port).sync();
-
-        channelFuture.addListener((ChannelFutureListener) channelFuture1 -> {
-            if(channelFuture1.isSuccess()){
-                log.info("client startup success");
-            }else{
-                log.debug("client startup failed");
-                channelFuture1.cause().printStackTrace();
-                group.shutdownGracefully();
-            }
-        });
-
-        return channelFuture;
-    }
-
-    @Bean
-    public Channel channel(@Autowired ChannelFuture channelFuture){
-        return channelFuture.channel();
+        FixedChannelPool channelPool = new FixedChannelPool(bootstrap, new NettyChannelPoolHandler(), maxChannel);
+        return channelPool;
     }
 }

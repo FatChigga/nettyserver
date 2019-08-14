@@ -57,7 +57,7 @@ public class NettyServer {
                          * Downstream则对应下行，发送的消息、主动的状态改变，都属于Downstream。
                          */
                         socketChannel.pipeline()
-                                .addLast(new RpcDecode(RpcRequest.class))
+                                .addLast(new RpcDecode())
                                 .addLast(new RpcEncode(RpcResponse.class))
                                 .addLast(new NettyServerHandler());
                     }

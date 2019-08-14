@@ -43,7 +43,7 @@ public class NettyClient {
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline()
                                 .addLast(new RpcEncode(RpcRequest.class))
-                                .addLast(new RpcDecode(RpcResponse.class))
+                                .addLast(new RpcDecode())
                                 .addLast(new NettyClientHandler());
                     }
                 });

@@ -4,6 +4,7 @@ import com.doyuyu.common.RpcRequest;
 import com.doyuyu.common.TransactionStatusEnum;
 import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
+import io.netty.channel.pool.FixedChannelPool;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,13 @@ import static java.util.stream.Collectors.toList;
 class TransactionEvent implements Callable<Object>{
 
     @Autowired
-    private Channel channel;
-
-    @Autowired
     private TransactionThreadGroup transactionThreadGroup;
 
     @Autowired
-    PlatformTransactionManager platformTransactionManager;
+    private PlatformTransactionManager platformTransactionManager;
+
+    @Autowired
+    private FixedChannelPool nettyChannelPool;
 
     private Object targetClass;
     private Method method;
@@ -53,6 +54,8 @@ class TransactionEvent implements Callable<Object>{
     @Override
     public Object call()throws Exception{
         isEnd = true;
+        //获取netty channel
+        Channel channel = nettyChannelPool.acquire().get();
         log.info("进入线程"+Thread.currentThread().getName());
         //获取事务
         TransactionStatus transactionStatus =
