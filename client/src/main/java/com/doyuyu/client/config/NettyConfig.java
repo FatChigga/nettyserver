@@ -25,6 +25,7 @@ public class NettyConfig {
         PropertiesConfiguration propertiesConfiguration = new PropertiesConfiguration();
         propertiesConfiguration.addProperty("biz.netty.ip",environment.getProperty("biz.netty.ip"));
         propertiesConfiguration.addProperty("biz.netty.port",environment.getProperty("biz.netty.port"));
+        propertiesConfiguration.addProperty("biz.netty.channel.max",environment.getProperty("biz.netty.channel.max"));
         return propertiesConfiguration;
     }
 }

@@ -3,7 +3,15 @@ package com.doyuyu.server.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZooDefs;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -32,6 +40,7 @@ import redis.clients.jedis.JedisPoolConfig;
  * @date 2019/6/27
  */
 @Configuration
+@Slf4j
 @ComponentScan(value = "com.doyuyu")
 public class ManageConfig {
 
@@ -130,5 +139,19 @@ public class ManageConfig {
         admin.declareBinding(topic1);
 
         return admin;
+    }
+
+    @Bean
+    CuratorFramework curatorFramework(@Autowired PropertiesConfiguration zookeeperConfiguration){
+        //创建重试策略
+        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000,5);
+        //创建zookeeper客户端
+        CuratorFramework client = CuratorFrameworkFactory.builder().connectString(zookeeperConfiguration.getString("biz.zookeeper.url"))
+                .sessionTimeoutMs(10000)
+                .retryPolicy(retryPolicy)
+                .namespace(zookeeperConfiguration.getString("biz.zookeeper.namespace"))
+                .build();
+        client.start();
+        return client;
     }
 }

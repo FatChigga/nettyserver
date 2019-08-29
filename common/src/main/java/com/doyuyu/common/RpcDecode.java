@@ -1,6 +1,5 @@
 package com.doyuyu.common;
 
-import com.alibaba.fastjson.JSON;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -25,7 +24,7 @@ public class RpcDecode extends ByteToMessageDecoder{
         }
         //readerIndex 为读取索引,表示已经被读取的字节数
         int beginIndex = in.readerIndex();
-        //读四位,消息的长度,通常用4个字节保存
+        //消息的长度
         int length = in.readInt();
         //readableBytes 返回可读的字节数
         if(in.readableBytes() < length){

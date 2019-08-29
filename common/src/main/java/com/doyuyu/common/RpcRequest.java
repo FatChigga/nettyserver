@@ -21,7 +21,7 @@ public class RpcRequest {
     /**
      * 线程ID
      */
-    private Long transactionId;
+    private String transactionId;
 
     /**
      * 状态

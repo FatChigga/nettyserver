@@ -1,7 +1,11 @@
 package com.doyuyu.server.netty;
 
+import com.doyuyu.common.CommonUtils;
+import com.doyuyu.common.RpcRequest;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +17,7 @@ import org.springframework.context.ApplicationContext;
  * @author Song
  * @date 2019/4/3
  */
-public class NettyServerHandler extends ChannelInboundHandlerAdapter {
+public class NettyServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
 
@@ -32,8 +36,8 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        Pipeline pipeline = newPipeline(msg,ctx);
+    public void channelRead0(ChannelHandlerContext ctx, ByteBuf byteBuf) throws Exception {
+        Pipeline pipeline = newPipeline(CommonUtils.Byte2TargetClassMethod(byteBuf, RpcRequest.class),ctx);
         try {
             pipeline.taskReceived();
             pipeline.taskFiltered();

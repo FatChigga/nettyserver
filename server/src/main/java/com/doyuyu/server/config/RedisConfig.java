@@ -13,7 +13,6 @@ import org.springframework.core.env.Environment;
  * @date 2019/6/27
  */
 @Configuration
-@PropertySource(value= "classpath:application.properties")
 public class RedisConfig {
 
     @Autowired

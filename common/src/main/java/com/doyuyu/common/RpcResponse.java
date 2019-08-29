@@ -20,5 +20,5 @@ public class RpcResponse {
 
     private MessageStatusEnum commitStatusEnum;
 
-    private Long threadId;
+    private String transactionId;
 }

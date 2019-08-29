@@ -1,6 +1,6 @@
 package com.doyuyu.client;
 
-import com.alibaba.fastjson.JSONObject;
+import com.doyuyu.common.CommonUtils;
 import com.doyuyu.common.MessageStatusEnum;
 import com.doyuyu.common.RpcResponse;
 import io.netty.buffer.ByteBuf;
@@ -9,9 +9,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Arrays;
-import java.util.List;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 /**
  *
@@ -23,40 +22,23 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<ByteBuf>{
     Logger logger = LoggerFactory.getLogger(NettyClientHandler.class);
 
     @Autowired
-    private TransactionThreadGroup transactionThreadGroup;
+    private TransactionGroup transactionGroup;
+
+    @Autowired
+    private DataSourceTransactionManager dataSourceTransactionManager;
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
-        int length = byteBuf.readInt();
-
-        byte[] head = new byte[4];
-        byteBuf.readBytes(head);
-        String headString = new String(head);
-
-        logger.info("receive server message:{}",headString);
-
-        byte[] body = new byte[length - 4];
-        byteBuf.readBytes(body);
-        String bodyString = new String(body);
-
-        RpcResponse rpcResponse = JSONObject.parseObject(bodyString, RpcResponse.class);
-
-        List<Thread> threads = Arrays.asList(transactionThreadGroup.getThreads());
-        Thread currentThread = null;
-        for(Thread thread:threads){
-            if(thread.getId() == rpcResponse.getThreadId()){
-                currentThread = thread;
-                break;
-            }
-        }
+        RpcResponse rpcResponse = (RpcResponse)CommonUtils.Byte2TargetClassMethod(byteBuf,RpcResponse.class);
+        TransactionStatus transactionStatus = transactionGroup.getTransaction(rpcResponse.getTransactionId());
 
         if(rpcResponse.getJoinStatusEnum().equals(MessageStatusEnum.FAILED)
                 ||rpcResponse.getCommitStatusEnum().equals(MessageStatusEnum.FAILED)){
-            currentThread.interrupt();
+            dataSourceTransactionManager.rollback(transactionStatus);
         }
 
         if(rpcResponse.getCommitStatusEnum().equals(MessageStatusEnum.SUCCESS)){
-            currentThread.notify();
+            dataSourceTransactionManager.commit(transactionStatus);
         }
     }
 
